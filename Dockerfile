@@ -13,7 +13,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 COPY root/. /
 
-RUN apk add --update unbound tini && \
+RUN apk add --update unbound dig drill tini && \
     rm  -rf /tmp/* /var/cache/apk/* && \
     chmod +x -R /scripts/*
 
