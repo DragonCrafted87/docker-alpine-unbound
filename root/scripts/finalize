@@ -18,7 +18,7 @@ def main():
   urlretrieve(url, '/etc/unbound/root.hints')
 
   logger.info(f'Starting tini as pid {getpid()}')
-  execvp('tini', ['tini', '-e',  '143', '--', '/usr/sbin/unbound', '-d', '-c', '/etc/unbound/unbound.conf'])
+  execvp('tini', ['tini', '-e',  '143', '--', '/usr/sbin/unbound', '-d', '-d', '-c', '/etc/unbound/unbound.conf'])
 
 if __name__ == "__main__":
   main()
