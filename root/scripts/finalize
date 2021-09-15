@@ -1,24 +1,90 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 # System Imports
 from os import execvp
 from os import getpid
 from pathlib import PurePath
+from urllib.request import urlopen
 from urllib.request import urlretrieve
 
 # Local Imports
 from includes.python_logger import create_logger
 
+
 def main():
-  logger = create_logger(PurePath(__file__).stem)
+    logger = create_logger(PurePath(__file__).stem)
 
-  logger.info('Beginning root hint file download')
+    logger.info("Beginning root hint file download")
 
-  url = 'https://www.internic.net/domain/named.cache'
-  urlretrieve(url, '/etc/unbound/root.hints')
+    url = "https://www.internic.net/domain/named.cache"
+    urlretrieve(url, "/etc/unbound/root.hints")
 
-  logger.info(f'Starting tini as pid {getpid()}')
-  execvp('tini', ['tini', '-e',  '143', '--', '/usr/sbin/unbound', '-d', '-d', '-c', '/etc/unbound/unbound.conf'])
+    urls_to_encode = []
+
+    with open("/config/hostfilelist.conf") as file:
+        host_file_name_lines = file.readlines()
+        host_file_name_lines = [line.rstrip() for line in host_file_name_lines]
+        host_file_name_lines = [line.split("#")[0] for line in host_file_name_lines]
+
+        for host_file_name in host_file_name_lines:
+            try:
+                host_file = urlopen(host_file_name)
+                counter = 0
+                for line in host_file:
+                    line = line.decode("utf-8")
+                    line = line.strip()
+                    if line.startswith("0.0.0.0"):
+                        line = line.split("#")[0]
+                        line = line.split(" ")[-1]
+                        line = line.strip()
+                        if line != "" and line != "0.0.0.0":
+                            urls_to_encode.append(line)
+                            if counter < 10:
+                                print(line)
+                                counter = counter + 1
+            finally:
+                continue
+
+    with open("/config/domainlist.conf") as file:
+        host_file_name_lines = file.readlines()
+        host_file_name_lines = [line.rstrip() for line in host_file_name_lines]
+        host_file_name_lines = [line.split("#")[0] for line in host_file_name_lines]
+
+        for host_file_name in host_file_name_lines:
+            try:
+                host_file = urlopen(host_file_name)
+                for line in host_file:
+                    line = line.decode("utf-8")
+                    line = line.strip()
+                    line = line.split("#")[0]
+                    line = line.split(" ")[0]
+                    line = line.strip()
+                    if line != "":
+                        urls_to_encode.append(line)
+            finally:
+                continue
+
+    with open("/etc/unbound/blocklist.conf", mode="w") as block_list:
+        for url in urls_to_encode:
+            print(f'local-zone: "{url}" always_nxdomain', file=block_list)
+
+    logger.info(f"Starting tini as pid {getpid()}")
+    execvp(
+        "tini",
+        [
+            "tini",
+            "-e",
+            "143",
+            "--",
+            "/usr/sbin/unbound",
+            "-d",
+            "-d",
+            "-c",
+            "/etc/unbound/unbound.conf",
+        ],
+    )
+
 
 if __name__ == "__main__":
-  main()
+    main()
