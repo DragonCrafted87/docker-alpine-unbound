@@ -1,4 +1,5 @@
-FROM dragoncrafted87/alpine:latest
+# syntax=docker/dockerfile:1
+FROM dragoncrafted87/alpine:3.19
 
 ARG BUILD_DATE
 ARG VCS_REF
@@ -13,8 +14,15 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
 
 COPY root/. /
 
-RUN apk add --update unbound drill tini && \
-    rm  -rf /tmp/* /var/cache/apk/* && \
+RUN <<eot ash
+    apk add --update \
+        drill \
+        tini \
+        unbound \
+
+    rm -rf /tmp/*
+    rm -rf /var/cache/apk/*
     chmod +x -R /scripts/*
+eot
 
 EXPOSE 53 53/udp
