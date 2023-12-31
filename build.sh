@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
 docker build \
-    --tag dragoncrafted87/alpine-unbound \
+    --platform linux/amd64,linux/arm64 \
+    --tag ghcr.io/dragoncrafted87/alpine-unbound \
     .
