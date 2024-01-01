@@ -17,7 +17,8 @@ COPY root/. /
 RUN <<eot ash
     set -e
 
-    apk add --update \
+    apk upgrade
+    apk add --no-cache --update \
         drill \
         tini \
         unbound \
